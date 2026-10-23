@@ -77,7 +77,7 @@
     position: absolute;
     right: 14px;
     top: auto;
-    bottom: calc(152px + env(safe-area-inset-bottom, 0));
+    bottom: calc(88px + env(safe-area-inset-bottom, 0));
     z-index: 5;
     text-align: right;
     pointer-events: none;
@@ -103,45 +103,10 @@
     font-weight: 500;
   }
 
-  #holdZone {
-    position: absolute;
-    left: 50%;
-    bottom: calc(28px + env(safe-area-inset-bottom, 0));
-    transform: translateX(-50%);
-    width: 132px;
-    height: 132px;
-    z-index: 6;
-    pointer-events: auto;
-    touch-action: none;
-    opacity: 0;
-    transition: opacity 0.25s;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  #holdZone.show { opacity: 1; }
-  #holdZone .ring {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    border: 3px solid rgba(120,115,110,0.28);
-    background: rgba(255,255,255,0.42);
-    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
-    pointer-events: none;
-  }
-  #holdZone .ring.inner {
-    inset: 28px;
-    border-width: 2px;
-    background: rgba(255,255,255,0.5);
-  }
-  #holdZone.active .ring {
-    border-color: rgba(160,130,90,0.55);
-    background: rgba(255,255,255,0.55);
-    box-shadow: 0 0 0 10px rgba(160,130,90,0.12);
-  }
-  #holdHint {
+  #dragHint {
     position: absolute;
     left: 0; right: 0;
-    bottom: calc(168px + env(safe-area-inset-bottom, 0));
+    bottom: calc(28px + env(safe-area-inset-bottom, 0));
     text-align: center;
     font-size: 0.78rem;
     font-weight: 600;
@@ -151,7 +116,7 @@
     opacity: 0;
     transition: opacity 0.25s;
   }
-  #holdHint.show { opacity: 1; }
+  #dragHint.show { opacity: 1; }
 
   #floatMsg {
     position: absolute;
@@ -281,9 +246,8 @@
     -webkit-overflow-scrolling: touch;
   }
   @media (max-height: 700px) {
-    #measure { bottom: calc(140px + env(safe-area-inset-bottom, 0)); }
+    #measure { bottom: calc(72px + env(safe-area-inset-bottom, 0)); }
     #measure .num { font-size: clamp(1.8rem, 9vw, 2.4rem); }
-    #holdZone { width: 120px; height: 120px; }
   }
   .result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
   .hint {
@@ -309,15 +273,14 @@
     <div class="rate" id="rateEl">0.0 cm/秒</div>
   </div>
 
-  <div id="holdZone"><div class="ring"></div><div class="ring inner"></div></div>
-  <div id="holdHint">按住畫面拉出卷紙</div>
+  <div id="dragHint">拖曳紙帶向下拉出</div>
   <div id="floatMsg"></div>
   <div id="countdown"></div>
 
   <div id="overlay">
     <div class="card" id="menuCard">
       <h2>卷紙挑戰</h2>
-      <p class="sub">按住畫面拉出卷紙 · 限時 18 秒<br>計長度（cm）· 結果圖可分享</p>
+      <p class="sub">拖曳紙帶向下拉出 · 限時 18 秒<br>計長度（cm）· 結果圖可分享</p>
       <button class="btn btn-primary" id="startBtn" type="button">開始卷紙</button>
       <a class="link-other" href="sheets.html">玩抽紙計張數 →</a>
       <a class="link-other" href="index.html" style="display:block;margin-top:6px;">← 返選擇頁</a>
@@ -346,7 +309,8 @@
   }
 
   const ROUND_SEC = 18;
-  const CM_PER_SEC = 28; // hold unwind rate
+  const CM_PER_PX = 0.42; // cm per drag pixel (down / out)
+  const MAX_CM_RATE = 90; // soft cap cm/sec from flicks
   const DL_PREFIX = 'tissue-roll-';
 
   function gradeLength(cm) {
@@ -378,20 +342,26 @@
   const rateEl = document.getElementById('rateEl');
   const floatMsg = document.getElementById('floatMsg');
   const countdownEl = document.getElementById('countdown');
-  const holdZone = document.getElementById('holdZone');
-  const holdHint = document.getElementById('holdHint');
+  const dragHint = document.getElementById('dragHint');
 
   let W = 1, H = 1;
   let phase = 'menu';
   let lengthCm = 0;
   let timeLeft = ROUND_SEC;
   let startTs = 0;
-  let holding = false;
+  let dragging = false;
+  let dragPointerId = null;
+  let lastDragY = 0;
+  let lastDragX = 0;
+  let dragNx = 0.5;
+  let dragNy = 0.5;
+  let pullVel = 0; // cm/sec momentum
   let countdownTimer = null;
   let floatTimer = null;
   let rollAngle = 0;
   let trailLen = 0.35;
   let lastMilestone = 0;
+  let shown50 = false;
 
   // ── Three.js ──────────────────────────────────────────
   const scene = new THREE.Scene();
@@ -557,17 +527,19 @@
   }
 
   function updateTrail() {
-    const len = Math.max(0.25, Math.min(2.2, trailLen));
+    const len = Math.max(0.25, Math.min(2.4, trailLen));
+    const fingerBiasX = dragging ? (dragNx - 0.55) * 0.9 : 0;
+    const fingerBiasY = dragging ? (dragNy - 0.45) * 0.55 : 0;
     for (let i = 0; i < SEG_N; i++) {
-      const t = (i + 0.5) / SEG_N;
+      const tt = (i + 0.5) / SEG_N;
       const seg = trailSegs[i];
-      const y = 0.35 - t * len;
-      const wave = Math.sin(rollAngle * 0.8 + t * 5) * (0.04 + t * 0.06);
-      seg.position.set(0.52 + wave, y, 0.05 + t * 0.08);
-      seg.rotation.z = wave * 1.5;
-      seg.rotation.x = 0.15 + t * 0.2;
-      seg.visible = t * len > 0.08;
-      seg.scale.y = Math.min(1.2, len / 1.2);
+      const y = 0.35 - tt * len - fingerBiasY * tt;
+      const wave = Math.sin(rollAngle * 0.8 + tt * 5) * (0.04 + tt * 0.06);
+      seg.position.set(0.52 + wave + fingerBiasX * tt, y, 0.05 + tt * 0.08);
+      seg.rotation.z = wave * 1.5 + fingerBiasX * 0.4;
+      seg.rotation.x = 0.15 + tt * 0.2;
+      seg.visible = tt * len > 0.08;
+      seg.scale.y = Math.min(1.25, len / 1.15);
     }
   }
 
@@ -615,9 +587,10 @@
 
   function showMenu() {
     phase = 'menu';
-    holding = false;
-    holdZone.classList.remove('show', 'active');
-    holdHint.classList.remove('show');
+    dragging = false;
+    dragPointerId = null;
+    pullVel = 0;
+    dragHint.classList.remove('show');
     timerEl.style.visibility = 'hidden';
     measureEl.style.visibility = 'hidden';
     menuCard.style.display = '';
@@ -632,8 +605,11 @@
     rollAngle = 0;
     trailLen = 0.35;
     lastMilestone = 0;
+    shown50 = false;
     timeLeft = ROUND_SEC;
-    holding = false;
+    dragging = false;
+    dragPointerId = null;
+    pullVel = 0;
     bits.forEach(b => { b.life = 0; b.mesh.visible = false; });
     updateHUD();
     menuCard.style.display = 'none';
@@ -641,8 +617,7 @@
     overlay.classList.add('hidden');
     timerEl.style.visibility = 'visible';
     measureEl.style.visibility = 'visible';
-    holdZone.classList.add('show');
-    holdHint.classList.add('show');
+    dragHint.classList.add('show');
 
     phase = 'countdown';
     let count = 3;
@@ -670,9 +645,10 @@
 
   function endRound() {
     phase = 'result';
-    holding = false;
-    holdZone.classList.remove('show', 'active');
-    holdHint.classList.remove('show');
+    dragging = false;
+    dragPointerId = null;
+    pullVel = 0;
+    dragHint.classList.remove('show');
     const grade = gradeLength(lengthCm);
     const f = formatLength(lengthCm);
     const primary = f.main + ' ' + f.unit;
@@ -775,32 +751,64 @@
     rctx.fillText('限時 ' + ROUND_SEC + ' 秒 · 計長度', RW / 2, 560);
   }
 
-  // Pointer / hold — reliable on iOS Chrome / Google app
-  let holdPointerId = null;
-  function setHolding(on) {
-    holding = !!on;
-    holdZone.classList.toggle('active', holding);
+  // Drag-to-unwind — finger tracks the hanging paper strip (no hold ring)
+  function applyPull(cm, spawn) {
+    if (cm <= 0) return;
+    lengthCm += cm;
+    rollAngle += cm * 0.18;
+    trailLen = Math.min(2.4, trailLen + cm * 0.035);
+    if (spawn && Math.random() < Math.min(0.9, cm * 0.35)) spawnBit();
+    const m = Math.floor(lengthCm / 100);
+    if (m > lastMilestone && m > 0) {
+      lastMilestone = m;
+      showFloat(m + ' m！', '#A07848');
+    } else if (!shown50 && lengthCm >= 50) {
+      shown50 = true;
+      showFloat('50 cm！', '#8A8580');
+    }
+    updateHUD();
   }
   function onDown(e) {
     if (phase !== 'playing') return;
     if (e.target && e.target.closest && e.target.closest('#overlay, button, a')) return;
     e.preventDefault();
     e.stopPropagation();
-    holdPointerId = e.pointerId;
+    dragPointerId = e.pointerId;
+    dragging = true;
+    lastDragY = e.clientY;
+    lastDragX = e.clientX;
     try {
-      const t = e.currentTarget || appEl;
-      t.setPointerCapture && t.setPointerCapture(e.pointerId);
+      const el = e.currentTarget || canvas;
+      el.setPointerCapture && el.setPointerCapture(e.pointerId);
     } catch (err) {}
-    setHolding(true);
+    const rect = canvas.getBoundingClientRect();
+    dragNx = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
+    dragNy = Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height)));
   }
   function onUp(e) {
-    if (holdPointerId != null && e && e.pointerId != null && e.pointerId !== holdPointerId) return;
-    holdPointerId = null;
-    setHolding(false);
+    if (dragPointerId != null && e && e.pointerId != null && e.pointerId !== dragPointerId) return;
+    dragPointerId = null;
+    dragging = false;
+    pullVel *= 0.4;
   }
   function onMove(e) {
-    if (!holding || phase !== 'playing') return;
+    if (!dragging || phase !== 'playing') return;
+    if (dragPointerId != null && e.pointerId !== dragPointerId) return;
     e.preventDefault();
+    const dy = e.clientY - lastDragY; // down = unwind
+    const dx = e.clientX - lastDragX;
+    lastDragY = e.clientY;
+    lastDragX = e.clientX;
+    const rect = canvas.getBoundingClientRect();
+    dragNx = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
+    dragNy = Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height)));
+    // Prefer downward / outward (right) pulls — feels like tugging the strip
+    const pullPx = Math.max(0, dy) + Math.max(0, -dy) * 0.12 + Math.max(0, dx) * 0.55 + Math.max(0, -dx) * 0.15;
+    if (pullPx > 0) {
+      const cm = pullPx * CM_PER_PX;
+      pullVel = Math.min(MAX_CM_RATE, pullVel * 0.55 + cm * 48);
+      applyPull(cm, true);
+    }
   }
   const canvas = renderer.domElement;
   const appEl = document.getElementById('app');
@@ -808,7 +816,6 @@
   canvas.style.touchAction = 'none';
   appEl.style.touchAction = 'none';
   canvas.addEventListener('pointerdown', onDown, holdOpts);
-  holdZone.addEventListener('pointerdown', onDown, holdOpts);
   appEl.addEventListener('pointerdown', onDown, holdOpts);
   window.addEventListener('pointerup', onUp);
   window.addEventListener('pointercancel', onUp);
@@ -831,22 +838,15 @@
         timeLeft = 0;
         updateHUD();
         endRound();
-      } else if (holding) {
-        lengthCm += CM_PER_SEC * dt;
-        rollAngle += dt * 5.5;
-        trailLen = Math.min(2.2, trailLen + dt * 1.1);
-        if (Math.random() < dt * 8) spawnBit();
-        // milestones
-        const m = Math.floor(lengthCm / 100);
-        if (m > lastMilestone && m > 0) {
-          lastMilestone = m;
-          showFloat(m + ' m！', '#A07848');
-        } else if (lengthCm >= 50 && lastMilestone === 0 && lengthCm - dt * CM_PER_SEC < 50) {
-          showFloat('50 cm！', '#8A8580');
-        }
-        updateHUD();
-      } else {
+      } else if (!dragging && pullVel > 0.5) {
+        const cm = pullVel * dt;
+        pullVel = Math.max(0, pullVel - dt * 55);
+        applyPull(cm, Math.random() < dt * 6);
+      } else if (!dragging) {
+        pullVel = 0;
         trailLen = Math.max(0.3, trailLen - dt * 0.45);
+      } else {
+        pullVel = Math.max(0, pullVel - dt * 20);
       }
     } else if (phase === 'menu') {
       rollAngle += dt * 0.6;
@@ -897,7 +897,7 @@
 
   window.__tissueRoll = {
     startGame, showMenu, endRound,
-    getState: () => ({ phase, lengthCm, timeLeft, holding }),
+    getState: () => ({ phase, lengthCm, timeLeft, dragging }),
     forcePlay: () => {
       if (countdownTimer) { clearTimeout(countdownTimer); countdownTimer = null; }
       countdownEl.classList.remove('show');
