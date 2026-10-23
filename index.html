@@ -3,57 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#FF6B9D">
+<meta name="theme-color" content="#F7F4EF">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>紙巾挑戰 · 揀模式</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
     min-height: 100%;
+    min-height: 100dvh;
     font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
-    background: #FFF5EB;
-    color: #3D2914;
+    background: #F7F4EF;
+    color: #3A3A3A;
+    overscroll-behavior: none;
   }
   #wrap {
     max-width: 420px;
     margin: 0 auto;
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(180deg, #FFE8D6 0%, #FFF5EB 38%, #FFEFD9 100%);
-    box-shadow: 0 0 40px rgba(180,100,60,0.12);
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
   }
   #banner {
-    background: linear-gradient(135deg, #FF6B9D 0%, #FF8FB5 50%, #FF6B9D 100%);
-    color: #fff;
     text-align: center;
-    padding: 16px 16px 18px;
-    box-shadow: 0 4px 16px rgba(255,107,157,0.35);
+    padding: 28px 20px 12px;
   }
   #banner h1 {
-    font-size: 1.35rem;
+    font-size: 1.55rem;
     font-weight: 800;
     letter-spacing: 0.04em;
-    text-shadow: 0 2px 0 rgba(0,0,0,0.1);
+    color: #3D3D3D;
   }
   #banner .hook {
-    font-size: 0.85rem;
-    opacity: 0.95;
-    margin-top: 6px;
+    font-size: 0.9rem;
+    color: #9A948C;
+    margin-top: 8px;
     font-weight: 500;
+    line-height: 1.45;
   }
   .main {
     flex: 1;
-    padding: 28px 20px 32px;
+    padding: 20px 20px 24px;
     display: flex;
     flex-direction: column;
     gap: 14px;
-  }
-  .intro {
-    text-align: center;
-    font-size: 0.9rem;
-    color: #8B6B4A;
-    line-height: 1.5;
-    margin-bottom: 6px;
   }
   a.mode-card {
     display: flex;
@@ -61,23 +55,49 @@
     gap: 14px;
     text-decoration: none;
     color: inherit;
-    background: #fff;
-    border: 2px solid #FFD0A8;
-    border-radius: 16px;
-    padding: 16px 14px;
-    box-shadow: 0 2px 8px rgba(180,100,60,0.08);
+    background: #FFFCFA;
+    border: 1.5px solid #E8E2DC;
+    border-radius: 18px;
+    padding: 18px 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
     transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+    min-height: 88px;
   }
   a.mode-card:active { transform: scale(0.98); }
-  a.mode-card:hover { border-color: #FF6B9D; box-shadow: 0 4px 14px rgba(255,107,157,0.2); }
-  .mode-card .emoji { font-size: 2.2rem; width: 52px; text-align: center; flex-shrink: 0; }
-  .mode-card strong { display: block; font-size: 1.08rem; color: #C45C26; margin-bottom: 3px; }
-  .mode-card span { font-size: 0.8rem; color: #8B6B4A; line-height: 1.4; }
+  a.mode-card:hover {
+    border-color: #C9B8A8;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+  }
+  .mode-card .icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.7rem;
+    flex-shrink: 0;
+    background: #F0EBE4;
+  }
+  .mode-card .icon.sheets { background: #F2E6EA; }
+  .mode-card .icon.roll { background: #EFE8DE; }
+  .mode-card strong {
+    display: block;
+    font-size: 1.1rem;
+    color: #3D3D3D;
+    margin-bottom: 4px;
+    font-weight: 800;
+  }
+  .mode-card span.desc {
+    font-size: 0.82rem;
+    color: #9A948C;
+    line-height: 1.4;
+  }
   .foot {
     text-align: center;
-    font-size: 0.72rem;
-    color: #A07858;
-    padding: 8px 16px 20px;
+    font-size: 0.75rem;
+    color: #B0AAA2;
+    padding: 8px 16px 24px;
   }
 </style>
 </head>
@@ -88,23 +108,22 @@
     <div class="hook">限時手速超休閒 · 揀一個開始玩</div>
   </div>
   <div class="main">
-    <p class="intro">兩個獨立網頁，可分別分享連結。<br>奶油風畫面、結果圖可下載分享 Threads。</p>
     <a class="mode-card" href="sheets.html">
-      <span class="emoji">📦</span>
+      <span class="icon sheets" aria-hidden="true">📦</span>
       <span>
         <strong>抽紙挑戰 · 計張數</strong>
-        <span>向上掃／拖，限時抽出最多張紙巾</span>
+        <span class="desc">按住抽出紙巾，限時計張數</span>
       </span>
     </a>
     <a class="mode-card" href="roll.html">
-      <span class="emoji">🧻</span>
+      <span class="icon roll" aria-hidden="true">🧻</span>
       <span>
         <strong>卷紙挑戰 · 計長度</strong>
-        <span>拖曳開卷，限時拉出最長捲紙</span>
+        <span class="desc">按住拉出卷紙，限時計 cm</span>
       </span>
     </a>
   </div>
-  <p class="foot">純 HTML · 毋須安裝 · 手機友善</p>
+  <p class="foot">Three.js · 手機全螢幕 · 結果圖可分享</p>
 </div>
 </body>
 </html>
