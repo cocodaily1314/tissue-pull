@@ -10,281 +10,132 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
-    height: 100%;
-    height: 100dvh;
-    overflow: hidden;
+    height: 100%; height: 100dvh; overflow: hidden;
     font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
-    background: #F7F4EF;
-    color: #3A3A3A;
-    overscroll-behavior: none;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
+    background: #F7F4EF; color: #3A3A3A;
+    overscroll-behavior: none; touch-action: none;
+    user-select: none; -webkit-user-select: none;
   }
   #app {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    height: 100dvh;
-    max-width: 480px;
-    margin: 0 auto;
-    overflow: hidden;
-    background: #F7F4EF;
+    position: relative; width: 100%; height: 100%; height: 100dvh;
+    max-width: 480px; margin: 0 auto; overflow: hidden; background: #F7F4EF;
     padding-top: env(safe-area-inset-top, 0);
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
-  #viewport {
-    position: absolute;
-    inset: 0;
+  #game {
+    position: absolute; inset: 0; display: block; width: 100%; height: 100%;
+    touch-action: none; cursor: grab;
   }
-  #viewport canvas {
-    display: block;
-    width: 100% !important;
-    height: 100% !important;
-    touch-action: none;
-  }
-
-  /* Minimal HUD */
+  #game:active { cursor: grabbing; }
   #hudTop {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    z-index: 5;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 8px 12px 0;
-    pointer-events: none;
+    position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 8px 12px 0; pointer-events: none;
   }
   #hudTop .title {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: #8A8580;
-    letter-spacing: 0.04em;
-    background: rgba(255,255,255,0.65);
-    padding: 4px 10px;
-    border-radius: 999px;
+    font-size: 0.72rem; font-weight: 600; color: #8A8580; letter-spacing: 0.04em;
+    background: rgba(255,255,255,0.65); padding: 4px 10px; border-radius: 999px;
   }
   #hudTop .timer {
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: #6B6560;
-    font-variant-numeric: tabular-nums;
-    background: rgba(255,255,255,0.78);
-    padding: 5px 11px;
-    border-radius: 999px;
+    font-size: 0.82rem; font-weight: 700; color: #6B6560; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,0.78); padding: 5px 11px; border-radius: 999px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.04);
   }
   #hudTop .timer.warn { color: #C45C26; }
   #hudTop .timer.crit { color: #D32F2F; }
-
   #measure {
-    position: absolute;
-    right: 14px;
-    top: auto;
+    position: absolute; right: 14px;
     bottom: calc(88px + env(safe-area-inset-bottom, 0));
-    z-index: 5;
-    text-align: right;
-    pointer-events: none;
+    z-index: 5; text-align: right; pointer-events: none;
   }
   #measure .num {
-    font-size: clamp(2.1rem, 10vw, 3rem);
-    font-weight: 800;
-    line-height: 1;
-    color: #3D3D3D;
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
+    font-size: clamp(2.1rem, 10vw, 3rem); font-weight: 800; line-height: 1;
+    color: #3D3D3D; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
   }
-  #measure .unit {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #9A948C;
-    margin-top: 2px;
-  }
-  #measure .rate {
-    font-size: 0.78rem;
-    color: #B0AAA2;
-    margin-top: 6px;
-    font-weight: 500;
-  }
-
+  #measure .unit { font-size: 1rem; font-weight: 600; color: #9A948C; margin-top: 2px; }
+  #measure .rate { font-size: 0.78rem; color: #B0AAA2; margin-top: 6px; font-weight: 500; }
   #dragHint {
-    position: absolute;
-    left: 0; right: 0;
+    position: absolute; left: 0; right: 0;
     bottom: calc(28px + env(safe-area-inset-bottom, 0));
-    text-align: center;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #A09A92;
-    z-index: 5;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.25s;
+    text-align: center; font-size: 0.78rem; font-weight: 600; color: #A09A92;
+    z-index: 5; pointer-events: none; opacity: 0; transition: opacity 0.25s;
   }
   #dragHint.show { opacity: 1; }
-
   #floatMsg {
-    position: absolute;
-    left: 50%;
-    top: 28%;
-    transform: translate(-50%, 0);
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: #5A8A9A;
+    position: absolute; left: 50%; top: 26%; transform: translate(-50%, 0);
+    font-size: 1.35rem; font-weight: 800; color: #5A8A9A;
     text-shadow: 0 2px 12px rgba(255,255,255,0.9);
-    pointer-events: none;
-    opacity: 0;
-    z-index: 7;
-    transition: opacity 0.2s, transform 0.45s;
-    white-space: nowrap;
+    pointer-events: none; opacity: 0; z-index: 7;
+    transition: opacity 0.2s, transform 0.45s; white-space: nowrap;
   }
-  #floatMsg.show {
-    opacity: 1;
-    transform: translate(-50%, -18px);
-  }
-
+  #floatMsg.show { opacity: 1; transform: translate(-50%, -18px); }
   #countdown {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 8;
-    pointer-events: none;
-    font-size: 5rem;
-    font-weight: 900;
-    color: #4A4A4A;
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    z-index: 8; pointer-events: none; font-size: 5rem; font-weight: 900; color: #4A4A4A;
     text-shadow: 0 4px 24px rgba(255,255,255,0.85);
   }
   #countdown.show { display: flex; }
-
   #overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    background: rgba(40,38,36,0.38);
-    z-index: 20;
-    padding: 10px;
+    position: absolute; inset: 0; display: flex; align-items: flex-start; justify-content: center;
+    background: rgba(40,38,36,0.38); z-index: 20; padding: 10px;
     padding-top: max(10px, env(safe-area-inset-top, 0));
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
   #overlay.hidden { display: none; }
-
   .card {
-    background: #FFFCFA;
-    border-radius: 22px;
-    padding: 24px 20px 20px;
-    width: 100%;
-    max-width: 340px;
-    text-align: center;
-    box-shadow: 0 16px 48px rgba(40,38,36,0.22);
-    border: 1px solid rgba(0,0,0,0.04);
+    background: #FFFCFA; border-radius: 22px; padding: 24px 20px 20px;
+    width: 100%; max-width: 340px; text-align: center;
+    box-shadow: 0 16px 48px rgba(40,38,36,0.22); border: 1px solid rgba(0,0,0,0.04);
   }
-  .card h2 {
-    font-size: 1.35rem;
-    margin-bottom: 8px;
-    color: #3A3A3A;
-    font-weight: 800;
-  }
-  .card .sub {
-    font-size: 0.88rem;
-    color: #8A8580;
-    margin-bottom: 18px;
-    line-height: 1.5;
-  }
+  .card h2 { font-size: 1.35rem; margin-bottom: 8px; color: #3A3A3A; font-weight: 800; }
+  .card .sub { font-size: 0.88rem; color: #8A8580; margin-bottom: 18px; line-height: 1.5; }
   .btn {
-    display: inline-block;
-    border: none;
-    border-radius: 999px;
-    padding: 14px 28px;
-    min-height: 48px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    transition: transform 0.12s, box-shadow 0.12s;
-    margin: 4px;
+    display: inline-block; border: none; border-radius: 999px; padding: 14px 28px;
+    min-height: 48px; font-size: 1.05rem; font-weight: 700; font-family: inherit;
+    cursor: pointer; transition: transform 0.12s; margin: 4px;
   }
   .btn:active { transform: scale(0.96); }
-  .btn-primary {
-    background: #3D3D3D;
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-    width: 100%;
-  }
-  .btn-secondary {
-    background: #fff;
-    color: #5A5550;
-    border: 1.5px solid #E5E0DA;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  }
-  .link-other {
-    display: inline-block;
-    margin-top: 14px;
-    font-size: 0.8rem;
-    color: #9A948C;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .link-other:hover { color: #5A8A9A; }
-
+  .btn-primary { background: #3D3D3D; color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.18); width: 100%; }
+  .btn-secondary { background: #fff; color: #5A5550; border: 1.5px solid #E5E0DA; }
+  .link-other { display: inline-block; margin-top: 14px; font-size: 0.8rem; color: #9A948C; text-decoration: none; font-weight: 600; }
   #resultScreen { display: none; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 360px; }
   #resultScreen.show { display: flex; }
   #resultCanvas {
-    width: 100%;
-    max-width: min(300px, 78vw);
-    max-height: 42vh;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    border-radius: 16px;
-    box-shadow: 0 8px 28px rgba(40,38,36,0.18);
-    background: #FFFCFA;
+    max-width: min(300px, 78vw); max-height: 42vh; width: auto; height: auto;
+    object-fit: contain; border-radius: 16px; box-shadow: 0 8px 28px rgba(40,38,36,0.18); background: #FFFCFA;
   }
   #resultScreen {
     max-height: calc(100dvh - 20px - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
+  .result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .hint { font-size: 0.78rem; color: rgba(255,255,255,0.92); text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
   @media (max-height: 700px) {
     #measure { bottom: calc(72px + env(safe-area-inset-bottom, 0)); }
     #measure .num { font-size: clamp(1.8rem, 9vw, 2.4rem); }
-  }
-  .result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-  .hint {
-    font-size: 0.78rem;
-    color: rgba(255,255,255,0.92);
-    text-align: center;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
   }
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="viewport"></div>
-
+  <canvas id="game"></canvas>
   <div id="hudTop">
     <div class="title">抽紙挑戰</div>
     <div class="timer" id="timerEl" style="visibility:hidden">18.0s</div>
   </div>
-
   <div id="measure" style="visibility:hidden">
     <div class="num" id="statNum">0</div>
     <div class="unit">張</div>
     <div class="rate" id="rateEl">0.0 張/秒</div>
   </div>
-
-  <div id="dragHint">拖曳紙巾向上抽出</div>
+  <div id="dragHint">拖曳紙巾向上 · 一次一張</div>
   <div id="floatMsg"></div>
   <div id="countdown"></div>
-
   <div id="overlay">
     <div class="card" id="menuCard">
       <h2>抽紙挑戰</h2>
-      <p class="sub">拖曳紙巾向上抽出 · 限時 18 秒<br>計張數 · 結果圖可分享</p>
+      <p class="sub">拖曳紙巾向上抽出 · 一次一張<br>限時 18 秒 · 結果圖可分享</p>
       <button class="btn btn-primary" id="startBtn" type="button">開始抽紙</button>
       <a class="link-other" href="roll.html">玩卷紙計長度 →</a>
       <a class="link-other" href="index.html" style="display:block;margin-top:6px;">← 返選擇頁</a>
@@ -301,20 +152,11 @@
     </div>
   </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
 (function () {
   'use strict';
-
-  if (typeof THREE === 'undefined') {
-    document.body.innerHTML = '<p style="padding:24px;font-family:sans-serif;background:#F7F4EF">無法載入 3D 引擎，請檢查網絡後重新整理。</p>';
-    return;
-  }
-
   const ROUND_SEC = 18;
-  const PULL_PER_PX = 0.028; // sheets per upward drag pixel
-  const MAX_PULL_RATE = 9; // soft cap sheets/sec from fast flicks
+  const PULL_THRESHOLD_PX = 110; // one full upward drag = one sheet
   const DL_PREFIX = 'tissue-sheets-';
 
   function gradeSheets(n) {
@@ -327,7 +169,8 @@
     return { title: '紙巾之神', emoji: '✨', color: '#D4A017' };
   }
 
-  const viewport = document.getElementById('viewport');
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
   const overlay = document.getElementById('overlay');
   const menuCard = document.getElementById('menuCard');
   const resultScreen = document.getElementById('resultScreen');
@@ -340,220 +183,48 @@
   const countdownEl = document.getElementById('countdown');
   const dragHint = document.getElementById('dragHint');
 
-  let W = 1, H = 1;
+  let W = 1, H = 1, dpr = 1;
   let phase = 'menu';
   let sheets = 0;
-  let sheetFrac = 0;
   let timeLeft = ROUND_SEC;
   let startTs = 0;
   let dragging = false;
   let dragPointerId = null;
-  let lastDragY = 0;
-  let lastDragX = 0;
-  let dragNx = 0.5; // normalized finger X on canvas
-  let fingerPull = 0; // 0..1 visual track of finger on sheet
-  let pullVel = 0; // sheets/sec from recent drag
+  let dragStartY = 0;
+  let dragY = 0;
+  let dragX = 0;
+  let pullProgress = 0; // 0..1 for current sheet only
+  let sheetDoneThisDrag = false; // one sheet per drag gesture
   let countdownTimer = null;
-  let pullLift = 0;
+  let floatTimer = null;
   let boxBob = 0;
   let shake = 0;
-  let floatTimer = null;
+  let floaters = [];
+  let peekLift = 0;
+  let tNow = 0;
 
-  // ── Three.js ──────────────────────────────────────────
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xF7F4EF);
-  scene.fog = new THREE.Fog(0xF7F4EF, 8, 18);
-
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 50);
-  camera.position.set(0, 1.35, 4.6);
-  camera.lookAt(0, 0.45, 0);
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  if (renderer.outputColorSpace !== undefined) renderer.outputColorSpace = THREE.SRGBColorSpace;
-  else if (renderer.outputEncoding !== undefined) renderer.outputEncoding = THREE.sRGBEncoding;
-  viewport.appendChild(renderer.domElement);
-
-  const amb = new THREE.AmbientLight(0xfff8f0, 0.72);
-  scene.add(amb);
-  const hemi = new THREE.HemisphereLight(0xffffff, 0xe8e0d8, 0.45);
-  scene.add(hemi);
-  const dir = new THREE.DirectionalLight(0xffffff, 0.85);
-  dir.position.set(2.5, 6, 3.5);
-  dir.castShadow = true;
-  dir.shadow.mapSize.set(1024, 1024);
-  dir.shadow.camera.near = 1;
-  dir.shadow.camera.far = 16;
-  dir.shadow.camera.left = -4;
-  dir.shadow.camera.right = 4;
-  dir.shadow.camera.top = 4;
-  dir.shadow.camera.bottom = -4;
-  dir.shadow.bias = -0.0005;
-  scene.add(dir);
-  const fill = new THREE.DirectionalLight(0xd8e8f0, 0.28);
-  fill.position.set(-3, 2, -2);
-  scene.add(fill);
-
-  function mat(color, opts) {
-    return new THREE.MeshStandardMaterial(Object.assign({
-      color: color,
-      roughness: 0.62,
-      metalness: 0.02,
-    }, opts || {}));
-  }
-
-  // Soft ground shadow disc
-  const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(1.6, 48),
-    new THREE.MeshStandardMaterial({ color: 0xEDE8E0, roughness: 1, metalness: 0 })
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -0.55;
-  ground.receiveShadow = true;
-  scene.add(ground);
-
-  const softShadow = new THREE.Mesh(
-    new THREE.CircleGeometry(0.95, 32),
-    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.08 })
-  );
-  softShadow.rotation.x = -Math.PI / 2;
-  softShadow.position.y = -0.54;
-  scene.add(softShadow);
-
-  // Tissue box group
-  const boxGroup = new THREE.Group();
-  scene.add(boxGroup);
-
-  const boxBody = new THREE.Mesh(
-    new THREE.BoxGeometry(1.55, 0.72, 0.95),
-    mat(0xF2E6EA, { roughness: 0.55 })
-  );
-  boxBody.castShadow = true;
-  boxBody.receiveShadow = true;
-  boxBody.position.y = 0;
-  boxGroup.add(boxBody);
-
-  // Soft pink side accent band
-  const band = new THREE.Mesh(
-    new THREE.BoxGeometry(1.56, 0.12, 0.96),
-    mat(0xE8C4D0, { roughness: 0.5 })
-  );
-  band.position.y = 0.08;
-  boxGroup.add(band);
-
-  // Top lid with slot
-  const lid = new THREE.Mesh(
-    new THREE.BoxGeometry(1.58, 0.06, 0.98),
-    mat(0xEDE0E6, { roughness: 0.5 })
-  );
-  lid.position.y = 0.39;
-  lid.castShadow = true;
-  boxGroup.add(lid);
-
-  // Oval slot (dark hole)
-  const slot = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22, 0.28, 0.04, 32),
-    mat(0x2A2428, { roughness: 0.9 })
-  );
-  slot.rotation.x = Math.PI / 2;
-  slot.scale.set(1.6, 1, 0.55);
-  slot.position.set(0, 0.42, 0);
-  boxGroup.add(slot);
-
-  // Emerging sheet (plane that lifts while dragging)
-  const sheetMat = mat(0xFFFCFA, { roughness: 0.85, side: THREE.DoubleSide });
-  const emerging = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.42), sheetMat);
-  emerging.position.set(0, 0.55, 0.02);
-  emerging.castShadow = true;
-  boxGroup.add(emerging);
-
-  // Fold crease line via thin box
-  const crease = new THREE.Mesh(
-    new THREE.BoxGeometry(0.48, 0.008, 0.01),
-    mat(0xE8DDD4, { roughness: 0.9 })
-  );
-  crease.position.set(0, 0.02, 0.01);
-  emerging.add(crease);
-
-  // Label on front (simple embossed rectangle — no brand parody)
-  const label = new THREE.Mesh(
-    new THREE.BoxGeometry(0.7, 0.28, 0.02),
-    mat(0xFFFCFA, { roughness: 0.45 })
-  );
-  label.position.set(0, 0.02, 0.48);
-  boxGroup.add(label);
-
-  const labelAccent = new THREE.Mesh(
-    new THREE.BoxGeometry(0.55, 0.04, 0.022),
-    mat(0xC9A0AE, { roughness: 0.4 })
-  );
-  labelAccent.position.set(0, 0.08, 0.49);
-  boxGroup.add(labelAccent);
-
-  boxGroup.position.set(0, -0.05, 0);
-
-  // Flying sheets pool
-  const flyRoot = new THREE.Group();
-  scene.add(flyRoot);
-  const flying = [];
-  const FLY_POOL = 24;
-  for (let i = 0; i < FLY_POOL; i++) {
-    const m = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.5 + Math.random() * 0.15, 0.28 + Math.random() * 0.08),
-      mat(0xFFFCFA, { roughness: 0.88, side: THREE.DoubleSide, transparent: true, opacity: 1 })
-    );
-    m.visible = false;
-    m.castShadow = true;
-    flyRoot.add(m);
-    flying.push({ mesh: m, vx: 0, vy: 0, vz: 0, life: 0, vr: 0 });
-  }
-
-  function spawnSheet() {
-    const f = flying.find(x => x.life <= 0);
-    if (!f) return;
-    f.life = 1;
-    f.mesh.visible = true;
-    f.mesh.material.opacity = 1;
-    f.mesh.position.set(
-      (Math.random() - 0.5) * 0.25,
-      0.65 + pullLift * 0.01,
-      0.05 + Math.random() * 0.1
-    );
-    f.mesh.rotation.set(
-      (Math.random() - 0.5) * 0.4,
-      (Math.random() - 0.5) * 0.6,
-      (Math.random() - 0.5) * 0.5
-    );
-    f.vx = (Math.random() - 0.5) * 1.8;
-    f.vy = 2.2 + Math.random() * 1.6;
-    f.vz = (Math.random() - 0.5) * 1.2;
-    f.vr = (Math.random() - 0.5) * 4;
-  }
+  const imgBox = new Image();
+  const imgSheet = new Image();
+  let assetsReady = 0;
+  function onAsset() { assetsReady++; }
+  imgBox.onload = onAsset; imgSheet.onload = onAsset;
+  imgBox.onerror = onAsset; imgSheet.onerror = onAsset;
+  imgBox.src = 'assets/tissue-box.jpg';
+  imgSheet.src = 'assets/tissue-sheet.jpg';
 
   function resize() {
     const app = document.getElementById('app');
-    W = app.clientWidth;
-    H = app.clientHeight;
-    camera.aspect = W / Math.max(1, H);
-    // Short phones: pull back + raise look so box clears HUD
-    if (H < 640) {
-      camera.fov = 44;
-      camera.position.set(0, 1.55, 5.1);
-      camera.lookAt(0, 0.55, 0);
-    } else {
-      camera.fov = 40;
-      camera.position.set(0, 1.35, 4.6);
-      camera.lookAt(0, 0.45, 0);
-    }
-    camera.updateProjectionMatrix();
-    renderer.setSize(W, H, false);
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = app.clientWidth; H = app.clientHeight;
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   window.addEventListener('resize', resize);
   resize();
 
-  // ── Game logic ────────────────────────────────────────
   function showFloat(text, color) {
     floatMsg.textContent = text;
     floatMsg.style.color = color || '#5A8A9A';
@@ -571,23 +242,52 @@
     timerEl.classList.toggle('crit', timeLeft <= 3);
   }
 
+  function spawnFloater(bx, by) {
+    floaters.push({
+      x: bx, y: by,
+      vx: (Math.random() - 0.5) * 80,
+      vy: -160 - Math.random() * 90,
+      rot: (Math.random() - 0.5) * 0.5,
+      vr: (Math.random() - 0.5) * 2.2,
+      sway: Math.random() * Math.PI * 2,
+      swayAmp: 18 + Math.random() * 22,
+      life: 1.35 + Math.random() * 0.4,
+      age: 0,
+      scale: 0.55 + Math.random() * 0.2,
+      flutter: 0.8 + Math.random() * 0.5,
+    });
+  }
+
   function completeSheet() {
     sheets++;
     boxBob = 1;
-    shake = Math.min(0.06, shake + 0.02);
-    spawnSheet();
-    pullLift = Math.max(0, pullLift - 8);
+    shake = Math.min(10, shake + 4);
+    const box = boxLayout();
+    spawnFloater(box.cx, box.slotY - 10);
+    pullProgress = 0;
+    peekLift = 0;
+    sheetDoneThisDrag = true;
     if (sheets % 10 === 0) showFloat(sheets + ' 張！', '#5A8A9A');
     else if (sheets % 5 === 0) showFloat('繼續抽！', '#8A8580');
     updateHUD();
   }
 
+  function boxLayout() {
+    const bw = Math.min(W * 0.72, 280);
+    const bh = bw * 0.78;
+    const cx = W / 2;
+    const cy = H * 0.58;
+    return {
+      cx, cy, bw, bh,
+      x: cx - bw / 2, y: cy - bh / 2,
+      slotY: cy - bh * 0.28,
+    };
+  }
+
   function showMenu() {
     phase = 'menu';
-    dragging = false;
-    dragPointerId = null;
-    pullVel = 0;
-    fingerPull = 0;
+    dragging = false; dragPointerId = null;
+    pullProgress = 0; sheetDoneThisDrag = false;
     dragHint.classList.remove('show');
     timerEl.style.visibility = 'hidden';
     measureEl.style.visibility = 'hidden';
@@ -599,17 +299,10 @@
   }
 
   function startGame() {
-    sheets = 0;
-    sheetFrac = 0;
-    pullLift = 0;
-    boxBob = 0;
-    shake = 0;
-    timeLeft = ROUND_SEC;
-    dragging = false;
-    dragPointerId = null;
-    pullVel = 0;
-    fingerPull = 0;
-    flying.forEach(f => { f.life = 0; f.mesh.visible = false; });
+    sheets = 0; pullProgress = 0; peekLift = 0;
+    sheetDoneThisDrag = false; boxBob = 0; shake = 0;
+    floaters = []; timeLeft = ROUND_SEC;
+    dragging = false; dragPointerId = null;
     updateHUD();
     menuCard.style.display = 'none';
     resultScreen.classList.remove('show');
@@ -617,7 +310,6 @@
     timerEl.style.visibility = 'visible';
     measureEl.style.visibility = 'visible';
     dragHint.classList.add('show');
-
     phase = 'countdown';
     let count = 3;
     countdownEl.classList.add('show');
@@ -644,14 +336,10 @@
 
   function endRound() {
     phase = 'result';
-    dragging = false;
-    dragPointerId = null;
-    pullVel = 0;
+    dragging = false; dragPointerId = null;
     dragHint.classList.remove('show');
     const grade = gradeSheets(sheets);
-    const primary = sheets + ' 張';
-    const secondary = '速率 ' + (sheets / ROUND_SEC).toFixed(1) + ' 張/秒';
-    drawResultCard(grade, primary, secondary);
+    drawResultCard(grade, sheets + ' 張', '速率 ' + (sheets / ROUND_SEC).toFixed(1) + ' 張/秒');
     menuCard.style.display = 'none';
     resultScreen.classList.add('show');
     overlay.classList.remove('hidden');
@@ -671,135 +359,197 @@
     const rc = resultCanvas;
     const rctx = rc.getContext('2d');
     const RW = rc.width, RH = rc.height;
-
     rctx.fillStyle = '#F7F4EF';
     rctx.fillRect(0, 0, RW, RH);
-
-    // Soft card panel
     rctx.fillStyle = '#FFFCFA';
     roundRect(rctx, 28, 36, RW - 56, RH - 72, 20);
     rctx.fill();
     rctx.strokeStyle = 'rgba(0,0,0,0.05)';
     rctx.lineWidth = 1;
     rctx.stroke();
-
     rctx.fillStyle = '#8A8580';
     rctx.textAlign = 'center';
     rctx.font = '600 15px "PingFang TC","Noto Sans TC",sans-serif';
     rctx.fillText('抽紙挑戰', RW / 2, 78);
-
     rctx.fillStyle = '#3D3D3D';
     rctx.font = '800 52px "PingFang TC","Noto Sans TC",sans-serif';
     rctx.fillText(primary, RW / 2, 160);
-
     rctx.fillStyle = '#9A948C';
     rctx.font = '600 16px "PingFang TC","Noto Sans TC",sans-serif';
     rctx.fillText(secondary, RW / 2, 195);
-
-    // Simple tissue box illustration
-    rctx.save();
-    rctx.translate(RW / 2, 340);
-    rctx.fillStyle = 'rgba(0,0,0,0.06)';
-    rctx.beginPath();
-    rctx.ellipse(0, 58, 70, 14, 0, 0, Math.PI * 2);
-    rctx.fill();
-    const g = rctx.createLinearGradient(-70, -40, 70, 40);
-    g.addColorStop(0, '#F8EEF2');
-    g.addColorStop(1, '#E8C4D0');
-    rctx.fillStyle = g;
-    roundRect(rctx, -72, -36, 144, 78, 12);
-    rctx.fill();
-    rctx.fillStyle = '#2A2428';
-    rctx.beginPath();
-    rctx.ellipse(0, -36, 38, 11, 0, 0, Math.PI * 2);
-    rctx.fill();
-    rctx.fillStyle = '#FFFCFA';
-    roundRect(rctx, -26, -58, 52, 28, 4);
-    rctx.fill();
-    rctx.strokeStyle = '#E8DDD4';
-    rctx.stroke();
-    rctx.restore();
-
+    if (imgBox.complete && imgBox.naturalWidth) {
+      const iw = 160, ih = 125;
+      rctx.save();
+      rctx.beginPath();
+      roundRect(rctx, RW / 2 - iw / 2, 230, iw, ih, 12);
+      rctx.clip();
+      rctx.drawImage(imgBox, RW / 2 - iw / 2, 230, iw, ih);
+      rctx.restore();
+    }
     roundRect(rctx, 56, 440, RW - 112, 72, 14);
     rctx.fillStyle = '#F7F4EF';
     rctx.fill();
     rctx.fillStyle = grade.color;
     rctx.font = '800 24px "PingFang TC","Noto Sans TC",sans-serif';
     rctx.fillText(grade.emoji + ' ' + grade.title, RW / 2, 485);
-
     rctx.fillStyle = '#A09A92';
     rctx.font = '500 13px "PingFang TC","Noto Sans TC",sans-serif';
-    rctx.fillText('限時 ' + ROUND_SEC + ' 秒 · 計張數', RW / 2, 560);
+    rctx.fillText('限時 ' + ROUND_SEC + ' 秒 · 一次一張', RW / 2, 560);
   }
 
-  // Drag-to-pull — finger tracks the tissue sheet (no hold ring)
   function onDown(e) {
     if (phase !== 'playing') return;
     if (e.target && e.target.closest && e.target.closest('#overlay, button, a')) return;
     e.preventDefault();
-    e.stopPropagation();
     dragPointerId = e.pointerId;
     dragging = true;
-    lastDragY = e.clientY;
-    lastDragX = e.clientX;
-    try {
-      const el = e.currentTarget || canvas;
-      el.setPointerCapture && el.setPointerCapture(e.pointerId);
-    } catch (err) {}
-    const rect = canvas.getBoundingClientRect();
-    dragNx = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
-    const ny = 1 - Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height)));
-    fingerPull = Math.max(fingerPull, ny * 0.45);
+    sheetDoneThisDrag = false;
+    pullProgress = 0;
+    dragStartY = e.clientY;
+    dragY = e.clientY;
+    dragX = e.clientX;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
   }
   function onUp(e) {
     if (dragPointerId != null && e && e.pointerId != null && e.pointerId !== dragPointerId) return;
     dragPointerId = null;
     dragging = false;
-    pullVel *= 0.35;
+    // release resets so next drag = next sheet
+    pullProgress = 0;
+    sheetDoneThisDrag = false;
   }
   function onMove(e) {
     if (!dragging || phase !== 'playing') return;
     if (dragPointerId != null && e.pointerId !== dragPointerId) return;
     e.preventDefault();
-    const dy = lastDragY - e.clientY; // up = pull out
-    const dx = e.clientX - lastDragX;
-    lastDragY = e.clientY;
-    lastDragX = e.clientX;
-    const pullPx = Math.max(0, dy) + Math.max(0, -dy) * 0.08 + Math.abs(dx) * 0.12;
-    if (pullPx > 0) {
-      sheetFrac += pullPx * PULL_PER_PX;
-      pullLift = Math.min(32, pullLift + pullPx * 0.55);
-      pullVel = Math.min(MAX_PULL_RATE, pullVel * 0.6 + pullPx * PULL_PER_PX * 55);
-      while (sheetFrac >= 1) {
-        sheetFrac -= 1;
-        completeSheet();
-      }
-    }
-    const rect = canvas.getBoundingClientRect();
-    dragNx = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
-    const ny = 1 - Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height)));
-    fingerPull = Math.max(0.15, Math.min(1, ny * 0.85 + pullLift / 40));
+    dragY = e.clientY;
+    dragX = e.clientX;
+    if (sheetDoneThisDrag) return; // one sheet per drag — wait for release
+    const upPx = Math.max(0, dragStartY - dragY);
+    pullProgress = Math.min(1, upPx / PULL_THRESHOLD_PX);
+    peekLift = pullProgress;
+    if (pullProgress >= 1) completeSheet();
   }
-  const canvas = renderer.domElement;
-  const appEl = document.getElementById('app');
-  const holdOpts = { passive: false };
-  canvas.style.touchAction = 'none';
-  appEl.style.touchAction = 'none';
-  canvas.addEventListener('pointerdown', onDown, holdOpts);
-  appEl.addEventListener('pointerdown', onDown, holdOpts);
+
+  canvas.addEventListener('pointerdown', onDown, { passive: false });
   window.addEventListener('pointerup', onUp);
   window.addEventListener('pointercancel', onUp);
-  window.addEventListener('pointermove', onMove, holdOpts);
+  window.addEventListener('pointermove', onMove, { passive: false });
   document.addEventListener('gesturestart', (e) => e.preventDefault());
   document.addEventListener('touchmove', (e) => {
     if (phase === 'playing' || phase === 'countdown') e.preventDefault();
   }, { passive: false });
 
-  // ── Loop ──────────────────────────────────────────────
+  function drawSheetSprite(x, y, w, h, rot, alpha, flutterPhase) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    // soft paper flutter warp via skew
+    const skew = Math.sin(flutterPhase) * 0.12;
+    ctx.transform(1, skew * 0.3, skew, 1, 0, 0);
+    ctx.globalAlpha = alpha;
+    if (imgSheet.complete && imgSheet.naturalWidth) {
+      ctx.drawImage(imgSheet, -w / 2, -h / 2, w, h);
+    } else {
+      ctx.fillStyle = '#FFFCFA';
+      roundRect(ctx, -w / 2, -h / 2, w, h, 8);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(200,190,180,0.45)';
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawScene(dt) {
+    // soft gradient bg
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#FBF8F3');
+    g.addColorStop(1, '#EFE8DF');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    const box = boxLayout();
+    const bob = Math.sin(boxBob * Math.PI) * -6;
+    const sx = shake > 0 ? (Math.random() - 0.5) * shake : 0;
+    const sy = shake > 0 ? (Math.random() - 0.5) * shake * 0.6 : 0;
+    const idle = (phase === 'menu' || phase === 'countdown') ? Math.sin(tNow / 700) * 4 : 0;
+
+    // shadow under box
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(box.cx + sx, box.y + box.bh + 14 + bob + sy, box.bw * 0.42, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // emerging / peeking sheet from slot (before box so it goes into slot visually — draw after top? draw under then box with hole feel)
+    const lift = (phase === 'playing' ? peekLift : 0.25 + Math.sin(tNow / 700) * 0.12);
+    const peekH = 36 + lift * 90;
+    const peekW = box.bw * 0.38;
+    const fingerBias = dragging ? ((dragX / Math.max(1, W)) - 0.5) * 40 : Math.sin(tNow / 900) * 6;
+    const peekY = box.slotY - peekH * 0.35 - lift * 28 + bob + idle;
+    const peekRot = fingerBias * 0.004 + Math.sin(tNow / 380) * 0.04 * (0.3 + lift);
+    if (!sheetDoneThisDrag || phase !== 'playing') {
+      drawSheetSprite(box.cx + fingerBias * 0.4 + sx, peekY + sy, peekW, peekH, peekRot, 0.95, tNow / 200);
+    }
+
+    // tissue box photo
+    ctx.save();
+    ctx.translate(sx, bob + sy + idle * 0.3);
+    if (imgBox.complete && imgBox.naturalWidth) {
+      ctx.drawImage(imgBox, box.x, box.y, box.bw, box.bh);
+    } else {
+      ctx.fillStyle = '#E8C4D0';
+      roundRect(ctx, box.x, box.y, box.bw, box.bh, 16);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // floaters — soft sway / lift / paper flutter
+    for (let i = floaters.length - 1; i >= 0; i--) {
+      const f = floaters[i];
+      f.age += dt;
+      f.life -= dt * 0.55;
+      f.vy += 220 * dt; // gravity
+      f.vy *= 0.995;
+      f.vx += Math.sin(f.sway + f.age * f.flutter * 6) * 40 * dt;
+      f.vx *= 0.98;
+      f.x += f.vx * dt;
+      f.y += f.vy * dt;
+      // soft lift pulses early in flight
+      if (f.age < 0.35) f.y -= 50 * dt;
+      f.rot += f.vr * dt;
+      f.vr += Math.sin(f.age * 9) * 0.8 * dt;
+      const alpha = Math.max(0, Math.min(1, f.life));
+      const swayX = Math.sin(f.sway + f.age * 5.5) * f.swayAmp * (0.4 + alpha);
+      const w = 88 * f.scale, h = 72 * f.scale;
+      drawSheetSprite(f.x + swayX, f.y, w, h, f.rot + Math.sin(f.age * 7) * 0.15, alpha, f.age * 8);
+      if (f.life <= 0 || f.y > H + 80) floaters.splice(i, 1);
+    }
+
+    // pull progress ring hint while dragging
+    if (phase === 'playing' && dragging && !sheetDoneThisDrag && pullProgress > 0.05) {
+      const r = 22;
+      const px = W / 2, py = box.slotY - 70;
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(90,138,154,0.25)';
+      ctx.lineWidth = 4;
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(90,138,154,0.85)';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.arc(px, py, r, -Math.PI / 2, -Math.PI / 2 + pullProgress * Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
   let last = performance.now();
   function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
+    tNow = now;
 
     if (phase === 'playing') {
       const elapsed = (performance.now() - startTs) / 1000;
@@ -809,71 +559,17 @@
         timeLeft = 0;
         updateHUD();
         endRound();
-      } else {
-        // Brief momentum after a flick, then decay — not a continuous hold pump
-        if (!dragging && pullVel > 0.05) {
-          sheetFrac += pullVel * dt;
-          pullLift = Math.min(32, pullLift + pullVel * dt * 6);
-          pullVel = Math.max(0, pullVel - dt * 14);
-          while (sheetFrac >= 1) {
-            sheetFrac -= 1;
-            completeSheet();
-          }
-        } else if (!dragging) {
-          pullVel = 0;
-          pullLift = Math.max(0, pullLift - dt * 38);
-          fingerPull = Math.max(0, fingerPull - dt * 1.8);
-          sheetFrac = Math.max(0, sheetFrac - dt * 0.25);
-        } else {
-          pullVel = Math.max(0, pullVel - dt * 6);
-        }
+      } else if (!dragging) {
+        peekLift = Math.max(0, peekLift - dt * 2.2);
       }
     } else if (phase === 'menu') {
-      // Idle bob
-      pullLift = 6 + Math.sin(now / 700) * 5;
+      peekLift = 0.25 + Math.sin(now / 700) * 0.12;
     }
 
-    // Animate emerging sheet — tracks finger pull
-    const lift = Math.max(pullLift, fingerPull * 22);
-    emerging.position.y = 0.48 + lift * 0.014;
-    emerging.position.x = dragging ? (dragNx - 0.5) * 0.22 : emerging.position.x * 0.88;
-    emerging.scale.y = 1 + lift * 0.02;
-    emerging.rotation.x = -0.08 - lift * 0.005;
-    emerging.rotation.z = dragging ? (dragNx - 0.5) * 0.25 : emerging.rotation.z * 0.85;
+    if (boxBob > 0) boxBob = Math.max(0, boxBob - dt * 3.5);
+    if (shake > 0) shake = Math.max(0, shake - dt * 28);
 
-    // Box bob / shake
-    if (boxBob > 0) boxBob = Math.max(0, boxBob - dt * 4);
-    if (shake > 0) shake = Math.max(0, shake - dt * 0.25);
-    const bobY = Math.sin(boxBob * Math.PI) * -0.04;
-    const sx = shake > 0 ? (Math.random() - 0.5) * shake : 0;
-    const sy = shake > 0 ? (Math.random() - 0.5) * shake : 0;
-    boxGroup.position.set(sx, -0.05 + bobY + sy, 0);
-    softShadow.scale.setScalar(1 + pullLift * 0.004);
-
-    // Idle gentle sway
-    if (phase === 'menu' || phase === 'countdown') {
-      boxGroup.rotation.y = Math.sin(now / 1800) * 0.12;
-    } else {
-      boxGroup.rotation.y += (0 - boxGroup.rotation.y) * Math.min(1, dt * 3);
-    }
-
-    // Flying sheets
-    for (const f of flying) {
-      if (f.life <= 0) continue;
-      f.mesh.position.x += f.vx * dt;
-      f.mesh.position.y += f.vy * dt;
-      f.mesh.position.z += f.vz * dt;
-      f.vy -= 6.5 * dt;
-      f.mesh.rotation.z += f.vr * dt;
-      f.life -= dt * 0.75;
-      f.mesh.material.opacity = Math.max(0, f.life);
-      if (f.life <= 0 || f.mesh.position.y < -1.2) {
-        f.life = 0;
-        f.mesh.visible = false;
-      }
-    }
-
-    renderer.render(scene, camera);
+    drawScene(dt);
     requestAnimationFrame(loop);
   }
 
@@ -890,7 +586,7 @@
 
   window.__tissueSheets = {
     startGame, showMenu, endRound,
-    getState: () => ({ phase, sheets, timeLeft, dragging, sheetFrac }),
+    getState: () => ({ phase, sheets, timeLeft, dragging, pullProgress, sheetDoneThisDrag }),
     forcePlay: () => {
       if (countdownTimer) { clearTimeout(countdownTimer); countdownTimer = null; }
       countdownEl.classList.remove('show');

@@ -10,277 +10,132 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
-    height: 100%;
-    height: 100dvh;
-    overflow: hidden;
+    height: 100%; height: 100dvh; overflow: hidden;
     font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
-    background: #F7F4EF;
-    color: #3A3A3A;
-    overscroll-behavior: none;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
+    background: #F7F4EF; color: #3A3A3A;
+    overscroll-behavior: none; touch-action: none;
+    user-select: none; -webkit-user-select: none;
   }
   #app {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    height: 100dvh;
-    max-width: 480px;
-    margin: 0 auto;
-    overflow: hidden;
-    background: #F7F4EF;
+    position: relative; width: 100%; height: 100%; height: 100dvh;
+    max-width: 480px; margin: 0 auto; overflow: hidden; background: #F7F4EF;
     padding-top: env(safe-area-inset-top, 0);
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
-  #viewport { position: absolute; inset: 0; }
-  #viewport canvas {
-    display: block;
-    width: 100% !important;
-    height: 100% !important;
-    touch-action: none;
+  #game {
+    position: absolute; inset: 0; display: block; width: 100%; height: 100%;
+    touch-action: none; cursor: grab;
   }
-
+  #game:active { cursor: grabbing; }
   #hudTop {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    z-index: 5;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 8px 12px 0;
-    pointer-events: none;
+    position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 8px 12px 0; pointer-events: none;
   }
   #hudTop .title {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: #8A8580;
-    letter-spacing: 0.04em;
-    background: rgba(255,255,255,0.65);
-    padding: 4px 10px;
-    border-radius: 999px;
+    font-size: 0.72rem; font-weight: 600; color: #8A8580; letter-spacing: 0.04em;
+    background: rgba(255,255,255,0.65); padding: 4px 10px; border-radius: 999px;
   }
   #hudTop .timer {
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: #6B6560;
-    font-variant-numeric: tabular-nums;
-    background: rgba(255,255,255,0.78);
-    padding: 5px 11px;
-    border-radius: 999px;
+    font-size: 0.82rem; font-weight: 700; color: #6B6560; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,0.78); padding: 5px 11px; border-radius: 999px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.04);
   }
   #hudTop .timer.warn { color: #C45C26; }
   #hudTop .timer.crit { color: #D32F2F; }
-
   #measure {
-    position: absolute;
-    right: 14px;
-    top: auto;
+    position: absolute; right: 14px;
     bottom: calc(88px + env(safe-area-inset-bottom, 0));
-    z-index: 5;
-    text-align: right;
-    pointer-events: none;
+    z-index: 5; text-align: right; pointer-events: none;
   }
   #measure .num {
-    font-size: clamp(2.1rem, 10vw, 3rem);
-    font-weight: 800;
-    line-height: 1;
-    color: #3D3D3D;
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
+    font-size: clamp(2.1rem, 10vw, 3rem); font-weight: 800; line-height: 1;
+    color: #3D3D3D; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
   }
-  #measure .unit {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #9A948C;
-    margin-top: 2px;
-  }
-  #measure .rate {
-    font-size: 0.78rem;
-    color: #B0AAA2;
-    margin-top: 6px;
-    font-weight: 500;
-  }
-
+  #measure .unit { font-size: 1rem; font-weight: 600; color: #9A948C; margin-top: 2px; }
+  #measure .rate { font-size: 0.78rem; color: #B0AAA2; margin-top: 6px; font-weight: 500; }
   #dragHint {
-    position: absolute;
-    left: 0; right: 0;
+    position: absolute; left: 0; right: 0;
     bottom: calc(28px + env(safe-area-inset-bottom, 0));
-    text-align: center;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #A09A92;
-    z-index: 5;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.25s;
+    text-align: center; font-size: 0.78rem; font-weight: 600; color: #A09A92;
+    z-index: 5; pointer-events: none; opacity: 0; transition: opacity 0.25s;
   }
   #dragHint.show { opacity: 1; }
-
   #floatMsg {
-    position: absolute;
-    left: 50%;
-    top: 28%;
-    transform: translate(-50%, 0);
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: #A07848;
+    position: absolute; left: 50%; top: 26%; transform: translate(-50%, 0);
+    font-size: 1.35rem; font-weight: 800; color: #A07848;
     text-shadow: 0 2px 12px rgba(255,255,255,0.9);
-    pointer-events: none;
-    opacity: 0;
-    z-index: 7;
-    transition: opacity 0.2s, transform 0.45s;
-    white-space: nowrap;
+    pointer-events: none; opacity: 0; z-index: 7;
+    transition: opacity 0.2s, transform 0.45s; white-space: nowrap;
   }
-  #floatMsg.show {
-    opacity: 1;
-    transform: translate(-50%, -18px);
-  }
-
+  #floatMsg.show { opacity: 1; transform: translate(-50%, -18px); }
   #countdown {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 8;
-    pointer-events: none;
-    font-size: 5rem;
-    font-weight: 900;
-    color: #4A4A4A;
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    z-index: 8; pointer-events: none; font-size: 5rem; font-weight: 900; color: #4A4A4A;
     text-shadow: 0 4px 24px rgba(255,255,255,0.85);
   }
   #countdown.show { display: flex; }
-
   #overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    background: rgba(40,38,36,0.38);
-    z-index: 20;
-    padding: 10px;
+    position: absolute; inset: 0; display: flex; align-items: flex-start; justify-content: center;
+    background: rgba(40,38,36,0.38); z-index: 20; padding: 10px;
     padding-top: max(10px, env(safe-area-inset-top, 0));
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
   #overlay.hidden { display: none; }
-
   .card {
-    background: #FFFCFA;
-    border-radius: 22px;
-    padding: 24px 20px 20px;
-    width: 100%;
-    max-width: 340px;
-    text-align: center;
-    box-shadow: 0 16px 48px rgba(40,38,36,0.22);
-    border: 1px solid rgba(0,0,0,0.04);
+    background: #FFFCFA; border-radius: 22px; padding: 24px 20px 20px;
+    width: 100%; max-width: 340px; text-align: center;
+    box-shadow: 0 16px 48px rgba(40,38,36,0.22); border: 1px solid rgba(0,0,0,0.04);
   }
-  .card h2 {
-    font-size: 1.35rem;
-    margin-bottom: 8px;
-    color: #3A3A3A;
-    font-weight: 800;
-  }
-  .card .sub {
-    font-size: 0.88rem;
-    color: #8A8580;
-    margin-bottom: 18px;
-    line-height: 1.5;
-  }
+  .card h2 { font-size: 1.35rem; margin-bottom: 8px; color: #3A3A3A; font-weight: 800; }
+  .card .sub { font-size: 0.88rem; color: #8A8580; margin-bottom: 18px; line-height: 1.5; }
   .btn {
-    display: inline-block;
-    border: none;
-    border-radius: 999px;
-    padding: 14px 28px;
-    min-height: 48px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    transition: transform 0.12s, box-shadow 0.12s;
-    margin: 4px;
+    display: inline-block; border: none; border-radius: 999px; padding: 14px 28px;
+    min-height: 48px; font-size: 1.05rem; font-weight: 700; font-family: inherit;
+    cursor: pointer; transition: transform 0.12s; margin: 4px;
   }
   .btn:active { transform: scale(0.96); }
-  .btn-primary {
-    background: #3D3D3D;
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-    width: 100%;
-  }
-  .btn-secondary {
-    background: #fff;
-    color: #5A5550;
-    border: 1.5px solid #E5E0DA;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  }
-  .link-other {
-    display: inline-block;
-    margin-top: 14px;
-    font-size: 0.8rem;
-    color: #9A948C;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .link-other:hover { color: #A07848; }
-
+  .btn-primary { background: #3D3D3D; color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.18); width: 100%; }
+  .btn-secondary { background: #fff; color: #5A5550; border: 1.5px solid #E5E0DA; }
+  .link-other { display: inline-block; margin-top: 14px; font-size: 0.8rem; color: #9A948C; text-decoration: none; font-weight: 600; }
   #resultScreen { display: none; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 360px; }
   #resultScreen.show { display: flex; }
   #resultCanvas {
-    width: 100%;
-    max-width: min(300px, 78vw);
-    max-height: 42vh;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    border-radius: 16px;
-    box-shadow: 0 8px 28px rgba(40,38,36,0.18);
-    background: #FFFCFA;
+    max-width: min(300px, 78vw); max-height: 42vh; width: auto; height: auto;
+    object-fit: contain; border-radius: 16px; box-shadow: 0 8px 28px rgba(40,38,36,0.18); background: #FFFCFA;
   }
   #resultScreen {
     max-height: calc(100dvh - 20px - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
+  .result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .hint { font-size: 0.78rem; color: rgba(255,255,255,0.92); text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
   @media (max-height: 700px) {
     #measure { bottom: calc(72px + env(safe-area-inset-bottom, 0)); }
     #measure .num { font-size: clamp(1.8rem, 9vw, 2.4rem); }
-  }
-  .result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-  .hint {
-    font-size: 0.78rem;
-    color: rgba(255,255,255,0.92);
-    text-align: center;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
   }
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="viewport"></div>
-
+  <canvas id="game"></canvas>
   <div id="hudTop">
     <div class="title">卷紙挑戰</div>
     <div class="timer" id="timerEl" style="visibility:hidden">18.0s</div>
   </div>
-
   <div id="measure" style="visibility:hidden">
-    <div class="num" id="statNum">0.0</div>
+    <div class="num" id="statNum">0</div>
     <div class="unit" id="statUnit">cm</div>
     <div class="rate" id="rateEl">0.0 cm/秒</div>
   </div>
-
   <div id="dragHint">拖曳紙帶向下拉出</div>
   <div id="floatMsg"></div>
   <div id="countdown"></div>
-
   <div id="overlay">
     <div class="card" id="menuCard">
       <h2>卷紙挑戰</h2>
-      <p class="sub">拖曳紙帶向下拉出 · 限時 18 秒<br>計長度（cm）· 結果圖可分享</p>
+      <p class="sub">拖曳紙帶向下／向外拉出 · 限時 18 秒<br>計長度 · 結果圖可分享</p>
       <button class="btn btn-primary" id="startBtn" type="button">開始卷紙</button>
       <a class="link-other" href="sheets.html">玩抽紙計張數 →</a>
       <a class="link-other" href="index.html" style="display:block;margin-top:6px;">← 返選擇頁</a>
@@ -297,20 +152,12 @@
     </div>
   </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
 (function () {
   'use strict';
-
-  if (typeof THREE === 'undefined') {
-    document.body.innerHTML = '<p style="padding:24px;font-family:sans-serif;background:#F7F4EF">無法載入 3D 引擎，請檢查網絡後重新整理。</p>';
-    return;
-  }
-
   const ROUND_SEC = 18;
-  const CM_PER_PX = 0.42; // cm per drag pixel (down / out)
-  const MAX_CM_RATE = 90; // soft cap cm/sec from flicks
+  const CM_PER_PX = 0.38;
+  const MAX_CM_RATE = 85;
   const DL_PREFIX = 'tissue-roll-';
 
   function gradeLength(cm) {
@@ -327,10 +174,11 @@
       const m = cm / 100;
       return { main: m >= 10 ? m.toFixed(1) : m.toFixed(2), unit: 'm', rawCm: cm };
     }
-    return { main: cm < 10 ? cm.toFixed(1) : (cm < 100 ? cm.toFixed(1) : String(Math.round(cm))), unit: 'cm', rawCm: cm };
+    return { main: cm < 10 ? cm.toFixed(1) : cm.toFixed(1), unit: 'cm', rawCm: cm };
   }
 
-  const viewport = document.getElementById('viewport');
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
   const overlay = document.getElementById('overlay');
   const menuCard = document.getElementById('menuCard');
   const resultScreen = document.getElementById('resultScreen');
@@ -344,7 +192,7 @@
   const countdownEl = document.getElementById('countdown');
   const dragHint = document.getElementById('dragHint');
 
-  let W = 1, H = 1;
+  let W = 1, H = 1, dpr = 1;
   let phase = 'menu';
   let lengthCm = 0;
   let timeLeft = ROUND_SEC;
@@ -353,212 +201,32 @@
   let dragPointerId = null;
   let lastDragY = 0;
   let lastDragX = 0;
-  let dragNx = 0.5;
-  let dragNy = 0.5;
-  let pullVel = 0; // cm/sec momentum
+  let dragNx = 0.55;
+  let dragNy = 0.55;
+  let pullVel = 0;
   let countdownTimer = null;
   let floatTimer = null;
   let rollAngle = 0;
-  let trailLen = 0.35;
+  let trailLen = 0.35; // visual meters-ish 0.25..2.6
   let lastMilestone = 0;
   let shown50 = false;
+  let bits = [];
+  let tNow = 0;
 
-  // ── Three.js ──────────────────────────────────────────
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xF7F4EF);
-  scene.fog = new THREE.Fog(0xF7F4EF, 8, 18);
-
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 50);
-  camera.position.set(0.3, 1.25, 4.5);
-  camera.lookAt(0, 0.35, 0);
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  if (renderer.outputColorSpace !== undefined) renderer.outputColorSpace = THREE.SRGBColorSpace;
-  else if (renderer.outputEncoding !== undefined) renderer.outputEncoding = THREE.sRGBEncoding;
-  viewport.appendChild(renderer.domElement);
-
-  scene.add(new THREE.AmbientLight(0xfff8f0, 0.72));
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xe8e0d8, 0.45));
-  const dir = new THREE.DirectionalLight(0xffffff, 0.85);
-  dir.position.set(2.2, 5.5, 3.2);
-  dir.castShadow = true;
-  dir.shadow.mapSize.set(1024, 1024);
-  dir.shadow.camera.near = 1;
-  dir.shadow.camera.far = 16;
-  dir.shadow.camera.left = -4;
-  dir.shadow.camera.right = 4;
-  dir.shadow.camera.top = 4;
-  dir.shadow.camera.bottom = -4;
-  dir.shadow.bias = -0.0005;
-  scene.add(dir);
-  const fill = new THREE.DirectionalLight(0xe8dcc8, 0.3);
-  fill.position.set(-3, 2, -2);
-  scene.add(fill);
-
-  function mat(color, opts) {
-    return new THREE.MeshStandardMaterial(Object.assign({
-      color: color,
-      roughness: 0.65,
-      metalness: 0.02,
-    }, opts || {}));
-  }
-
-  const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(1.6, 48),
-    new THREE.MeshStandardMaterial({ color: 0xEDE8E0, roughness: 1 })
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -0.85;
-  ground.receiveShadow = true;
-  scene.add(ground);
-
-  const softShadow = new THREE.Mesh(
-    new THREE.CircleGeometry(0.75, 32),
-    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.08 })
-  );
-  softShadow.rotation.x = -Math.PI / 2;
-  softShadow.position.y = -0.84;
-  scene.add(softShadow);
-
-  // Roll group
-  const rollGroup = new THREE.Group();
-  scene.add(rollGroup);
-  rollGroup.position.set(0, 0.35, 0);
-
-  // Outer paper cylinder
-  const rollOuter = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.55, 0.55, 1.15, 48),
-    mat(0xFFFCFA, { roughness: 0.78 })
-  );
-  rollOuter.rotation.z = Math.PI / 2;
-  rollOuter.castShadow = true;
-  rollOuter.receiveShadow = true;
-  rollGroup.add(rollOuter);
-
-  // Spiral rings hint
-  for (let i = 0; i < 4; i++) {
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(0.52 - i * 0.06, 0.012, 8, 48),
-      mat(0xEDE4DA, { roughness: 0.85 })
-    );
-    ring.rotation.y = Math.PI / 2;
-    ring.position.x = (i - 1.5) * 0.12;
-    rollGroup.add(ring);
-  }
-
-  // Cardboard core
-  const core = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.16, 0.16, 1.18, 24),
-    mat(0xC4A574, { roughness: 0.7 })
-  );
-  core.rotation.z = Math.PI / 2;
-  rollGroup.add(core);
-
-  const coreInner = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.11, 0.11, 1.19, 20),
-    mat(0xA88858, { roughness: 0.75 })
-  );
-  coreInner.rotation.z = Math.PI / 2;
-  rollGroup.add(coreInner);
-
-  // End caps (paper)
-  const capGeo = new THREE.CircleGeometry(0.55, 40);
-  const capL = new THREE.Mesh(capGeo, mat(0xF5EDE4, { roughness: 0.8, side: THREE.DoubleSide }));
-  capL.rotation.y = Math.PI / 2;
-  capL.position.x = -0.575;
-  rollGroup.add(capL);
-  const capR = capL.clone();
-  capR.position.x = 0.575;
-  rollGroup.add(capR);
-
-  // Concentric end rings
-  for (let i = 1; i <= 3; i++) {
-    const er = new THREE.Mesh(
-      new THREE.RingGeometry(0.16 + i * 0.1, 0.18 + i * 0.1, 32),
-      mat(0xE8DDD0, { roughness: 0.85, side: THREE.DoubleSide })
-    );
-    er.rotation.y = Math.PI / 2;
-    er.position.x = 0.578;
-    rollGroup.add(er);
-  }
-
-  // Hanging paper trail (ribbon of planes)
-  const trailGroup = new THREE.Group();
-  scene.add(trailGroup);
-  const trailSegs = [];
-  const SEG_N = 10;
-  for (let i = 0; i < SEG_N; i++) {
-    const seg = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.95, 0.22),
-      mat(0xFFFCFA, { roughness: 0.88, side: THREE.DoubleSide })
-    );
-    seg.castShadow = true;
-    trailGroup.add(seg);
-    trailSegs.push(seg);
-  }
-
-  // Tiny paper bits
-  const bits = [];
-  const bitRoot = new THREE.Group();
-  scene.add(bitRoot);
-  for (let i = 0; i < 16; i++) {
-    const m = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.12, 0.08),
-      mat(0xFFFCFA, { roughness: 0.9, side: THREE.DoubleSide, transparent: true, opacity: 1 })
-    );
-    m.visible = false;
-    bitRoot.add(m);
-    bits.push({ mesh: m, vx: 0, vy: 0, life: 0, vr: 0 });
-  }
-
-  function spawnBit() {
-    const b = bits.find(x => x.life <= 0);
-    if (!b) return;
-    b.life = 0.7 + Math.random() * 0.4;
-    b.mesh.visible = true;
-    b.mesh.material.opacity = 1;
-    b.mesh.position.set(0.5 + Math.random() * 0.2, 0.2 - trailLen * 0.3, 0.2);
-    b.vx = 0.4 + Math.random() * 0.8;
-    b.vy = (Math.random() - 0.3) * 0.6;
-    b.vr = (Math.random() - 0.5) * 5;
-  }
-
-  function updateTrail() {
-    const len = Math.max(0.25, Math.min(2.4, trailLen));
-    const fingerBiasX = dragging ? (dragNx - 0.55) * 0.9 : 0;
-    const fingerBiasY = dragging ? (dragNy - 0.45) * 0.55 : 0;
-    for (let i = 0; i < SEG_N; i++) {
-      const tt = (i + 0.5) / SEG_N;
-      const seg = trailSegs[i];
-      const y = 0.35 - tt * len - fingerBiasY * tt;
-      const wave = Math.sin(rollAngle * 0.8 + tt * 5) * (0.04 + tt * 0.06);
-      seg.position.set(0.52 + wave + fingerBiasX * tt, y, 0.05 + tt * 0.08);
-      seg.rotation.z = wave * 1.5 + fingerBiasX * 0.4;
-      seg.rotation.x = 0.15 + tt * 0.2;
-      seg.visible = tt * len > 0.08;
-      seg.scale.y = Math.min(1.25, len / 1.15);
-    }
-  }
+  const imgRoll = new Image();
+  const imgStrip = new Image();
+  imgRoll.src = 'assets/toilet-roll.jpg';
+  imgStrip.src = 'assets/paper-strip.jpg';
 
   function resize() {
     const app = document.getElementById('app');
-    W = app.clientWidth;
-    H = app.clientHeight;
-    camera.aspect = W / Math.max(1, H);
-    if (H < 640) {
-      camera.fov = 44;
-      camera.position.set(0.28, 1.45, 5.0);
-      camera.lookAt(0, 0.45, 0);
-    } else {
-      camera.fov = 40;
-      camera.position.set(0.3, 1.25, 4.5);
-      camera.lookAt(0, 0.35, 0);
-    }
-    camera.updateProjectionMatrix();
-    renderer.setSize(W, H, false);
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = app.clientWidth; H = app.clientHeight;
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   window.addEventListener('resize', resize);
   resize();
@@ -585,11 +253,51 @@
     timerEl.classList.toggle('crit', timeLeft <= 3);
   }
 
+  function spawnBit(rx, ry) {
+    bits.push({
+      x: rx, y: ry,
+      vx: 40 + Math.random() * 80,
+      vy: (Math.random() - 0.4) * 60,
+      rot: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 4,
+      life: 0.8 + Math.random() * 0.5,
+      age: 0,
+      w: 28 + Math.random() * 18,
+      h: 18 + Math.random() * 10,
+    });
+  }
+
+  function applyPull(cm, doSpawn) {
+    if (cm <= 0) return;
+    lengthCm += cm;
+    rollAngle += cm * 0.16;
+    trailLen = Math.min(2.6, Math.max(0.3, 0.35 + lengthCm * 0.0045));
+    if (doSpawn && Math.random() < Math.min(0.85, cm * 0.3)) {
+      const r = rollLayout();
+      spawnBit(r.cx + r.rw * 0.28, r.cy + 20);
+    }
+    const milestone = Math.floor(lengthCm / 100) * 100;
+    if (milestone >= 100 && milestone > lastMilestone) {
+      lastMilestone = milestone;
+      showFloat((milestone / 100) + ' m！', '#D4A017');
+    } else if (!shown50 && lengthCm >= 50) {
+      shown50 = true;
+      showFloat('50 cm！', '#A07848');
+    }
+    updateHUD();
+  }
+
+  function rollLayout() {
+    const rw = Math.min(W * 0.78, 300);
+    const rh = rw * 0.72;
+    const cx = W * 0.48;
+    const cy = H * 0.38;
+    return { cx, cy, rw, rh, x: cx - rw / 2, y: cy - rh / 2 };
+  }
+
   function showMenu() {
     phase = 'menu';
-    dragging = false;
-    dragPointerId = null;
-    pullVel = 0;
+    dragging = false; dragPointerId = null; pullVel = 0;
     dragHint.classList.remove('show');
     timerEl.style.visibility = 'hidden';
     measureEl.style.visibility = 'hidden';
@@ -601,16 +309,10 @@
   }
 
   function startGame() {
-    lengthCm = 0;
-    rollAngle = 0;
-    trailLen = 0.35;
-    lastMilestone = 0;
-    shown50 = false;
-    timeLeft = ROUND_SEC;
-    dragging = false;
-    dragPointerId = null;
-    pullVel = 0;
-    bits.forEach(b => { b.life = 0; b.mesh.visible = false; });
+    lengthCm = 0; rollAngle = 0; trailLen = 0.35;
+    lastMilestone = 0; shown50 = false; bits = [];
+    timeLeft = ROUND_SEC; pullVel = 0;
+    dragging = false; dragPointerId = null;
     updateHUD();
     menuCard.style.display = 'none';
     resultScreen.classList.remove('show');
@@ -618,7 +320,6 @@
     timerEl.style.visibility = 'visible';
     measureEl.style.visibility = 'visible';
     dragHint.classList.add('show');
-
     phase = 'countdown';
     let count = 3;
     countdownEl.classList.add('show');
@@ -645,18 +346,13 @@
 
   function endRound() {
     phase = 'result';
-    dragging = false;
-    dragPointerId = null;
-    pullVel = 0;
+    dragging = false; dragPointerId = null; pullVel = 0;
     dragHint.classList.remove('show');
     const grade = gradeLength(lengthCm);
     const f = formatLength(lengthCm);
     const primary = f.main + ' ' + f.unit;
-    const rateCm = lengthCm / ROUND_SEC;
-    const rateStr = rateCm >= 100
-      ? (rateCm / 100).toFixed(2) + ' m/秒'
-      : rateCm.toFixed(1) + ' cm/秒';
-    drawResultCard(grade, primary, '速率 ' + rateStr);
+    const secondary = '速率 ' + (lengthCm / ROUND_SEC).toFixed(1) + ' cm/秒';
+    drawResultCard(grade, primary, secondary);
     menuCard.style.display = 'none';
     resultScreen.classList.add('show');
     overlay.classList.remove('hidden');
@@ -676,111 +372,53 @@
     const rc = resultCanvas;
     const rctx = rc.getContext('2d');
     const RW = rc.width, RH = rc.height;
-
     rctx.fillStyle = '#F7F4EF';
     rctx.fillRect(0, 0, RW, RH);
-
     rctx.fillStyle = '#FFFCFA';
     roundRect(rctx, 28, 36, RW - 56, RH - 72, 20);
     rctx.fill();
     rctx.strokeStyle = 'rgba(0,0,0,0.05)';
     rctx.lineWidth = 1;
     rctx.stroke();
-
     rctx.fillStyle = '#8A8580';
     rctx.textAlign = 'center';
     rctx.font = '600 15px "PingFang TC","Noto Sans TC",sans-serif';
     rctx.fillText('卷紙挑戰', RW / 2, 78);
-
     rctx.fillStyle = '#3D3D3D';
-    rctx.font = '800 52px "PingFang TC","Noto Sans TC",sans-serif';
-    rctx.fillText(primary, RW / 2, 160);
-
+    rctx.font = '800 48px "PingFang TC","Noto Sans TC",sans-serif';
+    rctx.fillText(primary, RW / 2, 158);
     rctx.fillStyle = '#9A948C';
     rctx.font = '600 16px "PingFang TC","Noto Sans TC",sans-serif';
-    rctx.fillText(secondary, RW / 2, 195);
-
-    // Roll illustration
-    rctx.save();
-    rctx.translate(RW / 2, 340);
-    rctx.fillStyle = 'rgba(0,0,0,0.06)';
-    rctx.beginPath();
-    rctx.ellipse(0, 70, 60, 12, 0, 0, Math.PI * 2);
-    rctx.fill();
-    // hanging paper
-    rctx.fillStyle = '#FFFCFA';
-    rctx.strokeStyle = '#E8DDD4';
-    rctx.lineWidth = 1.5;
-    rctx.beginPath();
-    rctx.moveTo(30, 0);
-    rctx.quadraticCurveTo(55, 40, 40, 90);
-    rctx.lineTo(10, 90);
-    rctx.quadraticCurveTo(25, 40, 5, 0);
-    rctx.closePath();
-    rctx.fill();
-    rctx.stroke();
-    // roll body
-    const g = rctx.createLinearGradient(-55, -40, 55, 40);
-    g.addColorStop(0, '#FFFCFA');
-    g.addColorStop(1, '#EDE4DA');
-    rctx.fillStyle = g;
-    rctx.beginPath();
-    rctx.ellipse(0, 0, 58, 42, 0, 0, Math.PI * 2);
-    rctx.fill();
-    rctx.strokeStyle = '#E0D4C8';
-    rctx.stroke();
-    rctx.fillStyle = '#C4A574';
-    rctx.beginPath();
-    rctx.ellipse(0, 0, 16, 12, 0, 0, Math.PI * 2);
-    rctx.fill();
-    rctx.fillStyle = '#A88858';
-    rctx.beginPath();
-    rctx.ellipse(0, 0, 10, 7, 0, 0, Math.PI * 2);
-    rctx.fill();
-    rctx.restore();
-
+    rctx.fillText(secondary, RW / 2, 192);
+    if (imgRoll.complete && imgRoll.naturalWidth) {
+      const iw = 180, ih = 130;
+      rctx.save();
+      rctx.beginPath();
+      roundRect(rctx, RW / 2 - iw / 2, 220, iw, ih, 12);
+      rctx.clip();
+      rctx.drawImage(imgRoll, RW / 2 - iw / 2, 220, iw, ih);
+      rctx.restore();
+    }
     roundRect(rctx, 56, 440, RW - 112, 72, 14);
     rctx.fillStyle = '#F7F4EF';
     rctx.fill();
     rctx.fillStyle = grade.color;
     rctx.font = '800 24px "PingFang TC","Noto Sans TC",sans-serif';
     rctx.fillText(grade.emoji + ' ' + grade.title, RW / 2, 485);
-
     rctx.fillStyle = '#A09A92';
     rctx.font = '500 13px "PingFang TC","Noto Sans TC",sans-serif';
     rctx.fillText('限時 ' + ROUND_SEC + ' 秒 · 計長度', RW / 2, 560);
   }
 
-  // Drag-to-unwind — finger tracks the hanging paper strip (no hold ring)
-  function applyPull(cm, spawn) {
-    if (cm <= 0) return;
-    lengthCm += cm;
-    rollAngle += cm * 0.18;
-    trailLen = Math.min(2.4, trailLen + cm * 0.035);
-    if (spawn && Math.random() < Math.min(0.9, cm * 0.35)) spawnBit();
-    const m = Math.floor(lengthCm / 100);
-    if (m > lastMilestone && m > 0) {
-      lastMilestone = m;
-      showFloat(m + ' m！', '#A07848');
-    } else if (!shown50 && lengthCm >= 50) {
-      shown50 = true;
-      showFloat('50 cm！', '#8A8580');
-    }
-    updateHUD();
-  }
   function onDown(e) {
     if (phase !== 'playing') return;
     if (e.target && e.target.closest && e.target.closest('#overlay, button, a')) return;
     e.preventDefault();
-    e.stopPropagation();
     dragPointerId = e.pointerId;
     dragging = true;
     lastDragY = e.clientY;
     lastDragX = e.clientX;
-    try {
-      const el = e.currentTarget || canvas;
-      el.setPointerCapture && el.setPointerCapture(e.pointerId);
-    } catch (err) {}
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
     const rect = canvas.getBoundingClientRect();
     dragNx = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
     dragNy = Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height)));
@@ -795,40 +433,144 @@
     if (!dragging || phase !== 'playing') return;
     if (dragPointerId != null && e.pointerId !== dragPointerId) return;
     e.preventDefault();
-    const dy = e.clientY - lastDragY; // down = unwind
+    const dy = e.clientY - lastDragY; // down = pull
     const dx = e.clientX - lastDragX;
     lastDragY = e.clientY;
     lastDragX = e.clientX;
+    const pullPx = Math.max(0, dy) + Math.abs(dx) * 0.18 + Math.max(0, -dy) * 0.06;
+    if (pullPx > 0) {
+      const cm = Math.min(MAX_CM_RATE / 55, pullPx * CM_PER_PX);
+      applyPull(cm, true);
+      pullVel = Math.min(MAX_CM_RATE, pullVel * 0.55 + cm * 50);
+    }
     const rect = canvas.getBoundingClientRect();
     dragNx = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
     dragNy = Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height)));
-    // Prefer downward / outward (right) pulls — feels like tugging the strip
-    const pullPx = Math.max(0, dy) + Math.max(0, -dy) * 0.12 + Math.max(0, dx) * 0.55 + Math.max(0, -dx) * 0.15;
-    if (pullPx > 0) {
-      const cm = pullPx * CM_PER_PX;
-      pullVel = Math.min(MAX_CM_RATE, pullVel * 0.55 + cm * 48);
-      applyPull(cm, true);
-    }
   }
-  const canvas = renderer.domElement;
-  const appEl = document.getElementById('app');
-  const holdOpts = { passive: false };
-  canvas.style.touchAction = 'none';
-  appEl.style.touchAction = 'none';
-  canvas.addEventListener('pointerdown', onDown, holdOpts);
-  appEl.addEventListener('pointerdown', onDown, holdOpts);
+
+  canvas.addEventListener('pointerdown', onDown, { passive: false });
   window.addEventListener('pointerup', onUp);
   window.addEventListener('pointercancel', onUp);
-  window.addEventListener('pointermove', onMove, holdOpts);
+  window.addEventListener('pointermove', onMove, { passive: false });
   document.addEventListener('gesturestart', (e) => e.preventDefault());
   document.addEventListener('touchmove', (e) => {
     if (phase === 'playing' || phase === 'countdown') e.preventDefault();
   }, { passive: false });
 
+  function drawStrip(r) {
+    const lenPx = 80 + trailLen * 120;
+    const segs = 12;
+    const startX = r.cx + r.rw * 0.22;
+    const startY = r.cy + r.rh * 0.12;
+    const fingerX = dragging ? (dragNx - 0.55) * W * 0.35 : Math.sin(tNow / 900) * 10;
+    const fingerY = dragging ? Math.max(0, (dragNy - 0.35) * H * 0.35) : 0;
+
+    for (let i = 0; i < segs; i++) {
+      const t = (i + 0.5) / segs;
+      const y = startY + t * lenPx + fingerY * t;
+      const wave = Math.sin(rollAngle * 0.9 + t * 6 + tNow / 400) * (6 + t * 14);
+      const x = startX + wave + fingerX * t;
+      const rot = wave * 0.02 + fingerX * 0.0015 + Math.sin(tNow / 350 + t * 3) * 0.04;
+      const sw = r.rw * (0.28 - t * 0.04);
+      const sh = (lenPx / segs) * 1.35;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.globalAlpha = 0.92 - t * 0.15;
+      if (imgStrip.complete && imgStrip.naturalWidth) {
+        // sample a slice of the strip photo
+        const iw = imgStrip.naturalWidth;
+        const ih = imgStrip.naturalHeight;
+        const sy = (i / segs) * ih * 0.7;
+        const shSrc = ih / segs;
+        ctx.drawImage(imgStrip, 0, sy, iw, shSrc, -sw / 2, -sh / 2, sw, sh);
+      } else {
+        ctx.fillStyle = '#FFFCFA';
+        ctx.fillRect(-sw / 2, -sh / 2, sw, sh);
+        ctx.strokeStyle = 'rgba(200,190,180,0.4)';
+        ctx.strokeRect(-sw / 2, -sh / 2, sw, sh);
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawScene(dt) {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#FBF8F3');
+    g.addColorStop(1, '#EFE8DF');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    const r = rollLayout();
+    const idle = (phase === 'menu' || phase === 'countdown') ? Math.sin(tNow / 1600) * 0.04 : 0;
+    const spin = rollAngle * 0.02;
+
+    // shadow
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.09)';
+    ctx.beginPath();
+    ctx.ellipse(r.cx, r.y + r.rh + 18, r.rw * 0.38, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // hanging strip behind / under roll lip
+    drawStrip(r);
+
+    // roll photo with slight rotation feedback
+    ctx.save();
+    ctx.translate(r.cx, r.cy);
+    ctx.rotate(idle + Math.sin(spin) * 0.03);
+    if (imgRoll.complete && imgRoll.naturalWidth) {
+      ctx.drawImage(imgRoll, -r.rw / 2, -r.rh / 2, r.rw, r.rh);
+    } else {
+      ctx.fillStyle = '#FFFCFA';
+      roundRect(ctx, -r.rw / 2, -r.rh / 2, r.rw, r.rh, 20);
+      ctx.fill();
+      ctx.fillStyle = '#C4A574';
+      ctx.beginPath();
+      ctx.arc(0, 0, r.rh * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // soft highlight to sell paper sheen
+    const hg = ctx.createLinearGradient(-r.rw / 2, -r.rh / 2, r.rw / 2, r.rh / 2);
+    hg.addColorStop(0, 'rgba(255,255,255,0.12)');
+    hg.addColorStop(0.45, 'rgba(255,255,255,0)');
+    hg.addColorStop(1, 'rgba(180,160,140,0.08)');
+    ctx.fillStyle = hg;
+    ctx.fillRect(-r.rw / 2, -r.rh / 2, r.rw, r.rh);
+    ctx.restore();
+
+    // paper bits with flutter
+    for (let i = bits.length - 1; i >= 0; i--) {
+      const b = bits[i];
+      b.age += dt;
+      b.life -= dt;
+      b.vy += 180 * dt;
+      b.vx *= 0.99;
+      b.x += b.vx * dt + Math.sin(b.age * 8) * 20 * dt;
+      b.y += b.vy * dt;
+      b.rot += b.vr * dt;
+      const a = Math.max(0, Math.min(1, b.life));
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(b.rot);
+      ctx.globalAlpha = a;
+      if (imgStrip.complete && imgStrip.naturalWidth) {
+        ctx.drawImage(imgStrip, -b.w / 2, -b.h / 2, b.w, b.h);
+      } else {
+        ctx.fillStyle = '#FFFCFA';
+        ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      }
+      ctx.restore();
+      if (b.life <= 0 || b.y > H + 40) bits.splice(i, 1);
+    }
+  }
+
   let last = performance.now();
   function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
+    tNow = now;
 
     if (phase === 'playing') {
       const elapsed = (performance.now() - startTs) / 1000;
@@ -838,49 +580,20 @@
         timeLeft = 0;
         updateHUD();
         endRound();
-      } else if (!dragging && pullVel > 0.5) {
-        const cm = pullVel * dt;
+      } else if (!dragging && pullVel > 2) {
+        const cm = Math.min(pullVel * dt, MAX_CM_RATE * dt);
+        applyPull(cm, true);
         pullVel = Math.max(0, pullVel - dt * 55);
-        applyPull(cm, Math.random() < dt * 6);
       } else if (!dragging) {
         pullVel = 0;
-        trailLen = Math.max(0.3, trailLen - dt * 0.45);
-      } else {
-        pullVel = Math.max(0, pullVel - dt * 20);
+        trailLen = Math.max(0.3, trailLen - dt * 0.15);
       }
     } else if (phase === 'menu') {
-      rollAngle += dt * 0.6;
-      trailLen = 0.55 + Math.sin(now / 900) * 0.12;
+      trailLen = 0.45 + Math.sin(now / 900) * 0.08;
+      rollAngle += dt * 0.4;
     }
 
-    // Spin roll visually
-    rollOuter.rotation.x = rollAngle;
-    core.rotation.x = rollAngle;
-    coreInner.rotation.x = rollAngle;
-
-    // Gentle float
-    rollGroup.position.y = 0.35 + Math.sin(now / 1400) * 0.03;
-    if (phase === 'menu') {
-      rollGroup.rotation.y = Math.sin(now / 2000) * 0.15;
-    } else {
-      rollGroup.rotation.y += (0.08 - rollGroup.rotation.y) * Math.min(1, dt * 2);
-    }
-
-    updateTrail();
-    softShadow.scale.setScalar(1 + trailLen * 0.05);
-
-    for (const b of bits) {
-      if (b.life <= 0) continue;
-      b.mesh.position.x += b.vx * dt;
-      b.mesh.position.y += b.vy * dt;
-      b.vy -= 2.5 * dt;
-      b.mesh.rotation.z += b.vr * dt;
-      b.life -= dt;
-      b.mesh.material.opacity = Math.max(0, b.life);
-      if (b.life <= 0) b.mesh.visible = false;
-    }
-
-    renderer.render(scene, camera);
+    drawScene(dt);
     requestAnimationFrame(loop);
   }
 
@@ -897,7 +610,7 @@
 
   window.__tissueRoll = {
     startGame, showMenu, endRound,
-    getState: () => ({ phase, lengthCm, timeLeft, dragging }),
+    getState: () => ({ phase, lengthCm, timeLeft, dragging, trailLen }),
     forcePlay: () => {
       if (countdownTimer) { clearTimeout(countdownTimer); countdownTimer = null; }
       countdownEl.classList.remove('show');
